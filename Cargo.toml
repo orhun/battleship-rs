@@ -7,5 +7,3 @@ edition = "2021"
 
 [dependencies]
 fastrand = "1.7.0"
-log = "0.4.14"
-pretty_env_logger = "0.4.0"

@@ -44,6 +44,7 @@ impl Game {
 
     /// Shows the countdown for starting the game.
     fn show_countdown(&mut self) -> Result<()> {
+        println!("[#] Game is starting.");
         for i in 1..4 {
             let message = format!("Game starts in {}...\n", 4 - i);
             self.players
@@ -98,6 +99,7 @@ impl Game {
                         .iter_mut()
                         .try_for_each(|player| player.exit())?;
                     self.players.clear();
+                    print!("[#] {}", message);
                     break 'game;
                 }
 
@@ -105,15 +107,14 @@ impl Game {
 
                 self.players[i].send_message("Your turn: ")?;
                 let message = format!("{}'s turn.\n", self.players[i].name);
+                print!("[#] {}", message);
                 self.players[MAX_PLAYERS - (i + 1)].send_message(&message)?;
                 let coordinate_str = self.players[i].read_line()?;
                 let coordinate =
                     if let Ok(coordinate) = Coordinate::try_from(coordinate_str.to_string()) {
-                        log::info!(
-                            "{} firing a shot: {} ({:?})",
-                            self.players[i].name,
-                            coordinate_str,
-                            coordinate
+                        println!(
+                            "[#] {} is firing a shot: {} ({:?})",
+                            self.players[i].name, coordinate_str, coordinate
                         );
                         coordinate
                     } else {

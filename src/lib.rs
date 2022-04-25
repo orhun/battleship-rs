@@ -21,13 +21,13 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 pub fn run() -> Result<()> {
     let (grid_width, grid_height) = (10, 10);
     let listener = TcpListener::bind("0.0.0.0:1234")?;
-    log::info!("Server is listening on port :1234");
+    println!("[+] Server is listening on port :1234");
     let game = Arc::new(Mutex::new(Game::default()));
 
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                log::debug!("New connection: {}", stream.peer_addr()?);
+                println!("[+] New connection: {}", stream.peer_addr()?);
                 let mut player = Player::new(stream);
                 if game.lock().expect("failed to retrieve game").is_ready() {
                     player.send_message("Lobby is full.")?;
@@ -42,6 +42,11 @@ pub fn run() -> Result<()> {
                         if game.is_ready() {
                             for player in game.players.iter_mut() {
                                 player.grid = Grid::new_random(grid_width, grid_height);
+                                println!(
+                                    "[#] {}'s grid:{}",
+                                    player.name,
+                                    player.grid.as_string(true)?
+                                );
                             }
                             game.play(grid_width, grid_height)?;
                         }
@@ -51,7 +56,7 @@ pub fn run() -> Result<()> {
                 });
             }
             Err(e) => {
-                log::error!("Connection failed: {}", e);
+                eprintln!("[!] Connection failed: {}", e);
             }
         }
     }
