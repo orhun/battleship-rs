@@ -1,0 +1,8 @@
+[package]
+name = "battleship"
+version = "0.1.0"
+description = "Battleship game implemented in Rust"
+authors = ["Orhun Parmaksız <orhunparmaksiz@gmail.com>"]
+edition = "2021"
+
+[dependencies]
