@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 crossterm = "0.22.1"
+fastrand = "1.7.0"

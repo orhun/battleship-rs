@@ -3,9 +3,11 @@
 #![warn(missing_docs, clippy::unwrap_used)]
 
 pub mod grid;
+pub mod ship;
 
+use crate::grid::Grid;
+use crate::ship::Ship;
 use crossterm::terminal::{Clear, ClearType};
-use grid::Grid;
 use std::io::{self, Write};
 
 /// Type alias for the standard [`Result`] type.
@@ -14,7 +16,11 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 /// Runs the game.
 pub fn run<W: Write>(mut output: W) -> Result<()> {
     // Prepare the game.
-    let grid = Grid::new(10, 10);
+    let mut grid = Grid::new(10, 10);
+    for _ in 0..3 {
+        let ship = Ship::new_random(grid.width, grid.height);
+        grid.place_ship(ship);
+    }
     crossterm::execute!(output, Clear(ClearType::All))?;
 
     loop {
