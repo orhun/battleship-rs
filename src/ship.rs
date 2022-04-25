@@ -38,7 +38,7 @@ pub struct Ship {
     /// Coordinates of the ship.
     pub coord: Coordinate,
     /// Hit count.
-    hit: u8,
+    pub hit: u8,
 }
 
 impl Ship {
