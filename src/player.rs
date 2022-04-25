@@ -1,9 +1,10 @@
 //! Player.
 
+use crate::grid::Coordinate;
 use crate::grid::Grid;
 use crate::Result;
 use std::io::{BufRead, BufReader, Write};
-use std::net::TcpStream;
+use std::net::{Shutdown, TcpStream};
 
 /// Representation of a player.
 #[derive(Debug)]
@@ -12,6 +13,8 @@ pub struct Player {
     pub name: String,
     /// Player's grid.
     pub grid: Grid,
+    /// Player's hits.
+    pub hits: Vec<Coordinate>,
     /// TCP stream of the player.
     stream: TcpStream,
 }
@@ -22,6 +25,7 @@ impl Player {
         Self {
             name: String::new(),
             grid: Grid::default(),
+            hits: Vec::new(),
             stream,
         }
     }
@@ -44,5 +48,11 @@ impl Player {
         let mut line = String::new();
         reader.read_line(&mut line)?;
         Ok(line.trim().to_string())
+    }
+
+    /// Shuts down the TCP connection.
+    pub fn exit(&mut self) -> Result<()> {
+        self.stream.shutdown(Shutdown::Both)?;
+        Ok(())
     }
 }

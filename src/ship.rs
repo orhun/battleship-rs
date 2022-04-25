@@ -1,11 +1,19 @@
 //! A ship.
 
+use crate::grid::Coordinate;
+
 /// Available ship types.
 #[derive(Copy, Clone, Debug)]
 pub enum ShipType {
     /// 1x1 ship.
     Little = 1,
     // TODO: add more ships
+}
+
+impl Default for ShipType {
+    fn default() -> Self {
+        Self::Little
+    }
 }
 
 impl ShipType {
@@ -15,26 +23,11 @@ impl ShipType {
     }
 }
 
-/// Representation of coordinates on a 2-dimensional plane.
-#[derive(Debug)]
-pub struct Coordinate {
-    /// X value.
-    pub x: u8,
-    /// Y value.
-    pub y: u8,
-}
-
-impl From<(u8, u8)> for Coordinate {
-    fn from(v: (u8, u8)) -> Self {
-        Self { x: v.0, y: v.1 }
-    }
-}
-
 /// Representation of a ship.
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct Ship {
     /// Ship type.
-    type_: ShipType,
+    pub type_: ShipType,
     /// Coordinates of the ship.
     pub coord: Coordinate,
     /// Hit count.
@@ -57,5 +50,10 @@ impl Ship {
             ShipType::Little,
             (fastrand::u8(1..=max_x), fastrand::u8(1..=max_y)),
         )
+    }
+
+    /// Returns whether if the ship is sunk.
+    pub fn is_sunk(&self) -> bool {
+        self.type_.size() == self.hit
     }
 }
