@@ -15,6 +15,14 @@ use std::net::TcpListener;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+/// ASCII art banner.
+const BANNER: &str = r#"        _    _
+     __|_|__|_|__
+   _|____________|__
+  |o o o o o o o o /
+~'`~'`~'`~'`~'`~'`~'`~
+Welcome to Battleship!"#;
+
 /// Type alias for the standard [`Result`] type.
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 

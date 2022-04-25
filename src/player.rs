@@ -2,7 +2,7 @@
 
 use crate::grid::Coordinate;
 use crate::grid::Grid;
-use crate::Result;
+use crate::{Result, BANNER};
 use std::io::{BufRead, BufReader, Write};
 use std::net::{Shutdown, TcpStream};
 
@@ -32,7 +32,7 @@ impl Player {
 
     /// Greets the player with a message and sets the name.
     pub fn greet(&mut self) -> Result<()> {
-        self.send("Welcome to Battleship! Please enter your name: ")?;
+        self.send(&format!("{BANNER}\nPlease enter your name: "))?;
         self.name = self.read()?;
         Ok(())
     }
