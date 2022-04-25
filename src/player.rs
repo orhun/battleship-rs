@@ -32,18 +32,18 @@ impl Player {
 
     /// Greets the player with a message and sets the name.
     pub fn greet(&mut self) -> Result<()> {
-        self.send_message("Welcome to Battleship! Please enter your name: ")?;
-        self.name = self.read_line()?;
+        self.send("Welcome to Battleship! Please enter your name: ")?;
+        self.name = self.read()?;
         Ok(())
     }
 
     /// Writes the given message to the TCP stream.
-    pub fn send_message(&mut self, message: &str) -> Result<()> {
+    pub fn send(&mut self, message: &str) -> Result<()> {
         Ok(self.stream.write_all(message.as_bytes())?)
     }
 
     /// Reads the next line from the TCP steram.
-    pub fn read_line(&mut self) -> Result<String> {
+    pub fn read(&mut self) -> Result<String> {
         let mut reader = BufReader::new(&self.stream);
         let mut line = String::new();
         reader.read_line(&mut line)?;
@@ -54,5 +54,16 @@ impl Player {
     pub fn exit(&mut self) -> Result<()> {
         self.stream.shutdown(Shutdown::Both)?;
         Ok(())
+    }
+}
+
+impl Drop for Player {
+    fn drop(&mut self) {
+        if let Ok(peer_addr) = self.stream.peer_addr() {
+            println!("[+] Ending TCP connection with {:?}", peer_addr);
+            if let Err(e) = self.exit() {
+                eprintln!("[!] Failed to end TCP connection: {e}")
+            }
+        }
     }
 }
