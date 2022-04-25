@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 fastrand = "1.7.0"
+
+[profile.release]
+lto = true
+codegen-units = 1
