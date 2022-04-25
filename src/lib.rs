@@ -18,12 +18,11 @@ use std::thread;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /// Runs the game.
-pub fn run() -> Result<()> {
+pub fn run(socket_addr: &str) -> Result<()> {
+    let listener = TcpListener::bind(socket_addr)?;
+    println!("[+] Server is listening on {}", socket_addr);
     let (grid_width, grid_height) = (10, 10);
-    let listener = TcpListener::bind("0.0.0.0:1234")?;
-    println!("[+] Server is listening on port :1234");
     let game = Arc::new(Mutex::new(Game::default()));
-
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
