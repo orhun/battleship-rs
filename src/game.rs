@@ -61,13 +61,15 @@ impl Game {
                 .hits
                 .iter()
                 .map(|coord| Ship {
-                    coord: *coord,
-                    hit: self.players[MAX_PLAYERS - (i + 1)]
-                        .grid
-                        .ships
-                        .iter()
-                        .filter(|ship| ship.coord == *coord)
-                        .count() as u8,
+                    coords: vec![Coordinate {
+                        x: coord.x,
+                        y: coord.y,
+                        is_hit: self.players[MAX_PLAYERS - (i + 1)]
+                            .grid
+                            .ships
+                            .iter()
+                            .any(|ship| ship.coords.contains(coord)),
+                    }],
                     ..Default::default()
                 })
                 .collect();
@@ -91,7 +93,7 @@ impl Game {
         'game: loop {
             for i in 0..MAX_PLAYERS {
                 if self.players[i].grid.ships.iter().all(|ship| ship.is_sunk()) {
-                    let message = format!("{} won!\n", self.players[MAX_PLAYERS - (i + 1)].name);
+                    let message = format!("{} won.\n", self.players[MAX_PLAYERS - (i + 1)].name);
                     self.players[i].send(&message)?;
                     self.players[MAX_PLAYERS - (i + 1)].send("You won!\n")?;
                     self.players.clear();
@@ -118,12 +120,18 @@ impl Game {
                         continue;
                     };
                 self.players[i].hits.push(coordinate);
-                self.players[MAX_PLAYERS - (i + 1)]
+                if let Some(coordinate) = self.players[MAX_PLAYERS - (i + 1)]
                     .grid
                     .ships
                     .iter_mut()
-                    .filter(|ship| ship.coord == coordinate)
-                    .for_each(|ship| ship.hit += 1);
+                    .find(|ship| ship.coords.contains(&coordinate))
+                    .and_then(|ship| ship.coords.iter_mut().find(|c| *c == &coordinate))
+                {
+                    coordinate.is_hit = true;
+                    self.players[i].send("Hit!\n")?;
+                } else {
+                    self.players[i].send("Missed.\n")?;
+                }
             }
         }
         Ok(())

@@ -38,14 +38,14 @@ pub fn run(socket_addr: &str) -> Result<()> {
                 println!("[+] New connection: {}", stream.peer_addr()?);
                 let mut player = Player::new(stream);
                 if game.try_lock().is_err() {
-                    player.send("Lobby is full.\n")?;
+                    player.send("Lobby is full. Please wait.\n")?;
                     continue;
                 }
                 let game = Arc::clone(&game);
                 thread::spawn(move || {
-                    let mut game = game.lock().expect("failed to retrieve game");
                     let start_game = || -> Result<()> {
                         player.greet()?;
+                        let mut game = game.lock().expect("failed to retrieve game");
                         game.add_player(player)?;
                         if game.is_ready() {
                             for player in game.players.iter_mut() {
@@ -64,6 +64,7 @@ pub fn run(socket_addr: &str) -> Result<()> {
                         eprintln!("[!] Gameplay error: {}", e);
                         if let Ok(io_error) = e.downcast::<IoError>() {
                             if io_error.kind() == ErrorKind::BrokenPipe {
+                                let mut game = game.lock().expect("failed to retrieve game");
                                 game.players.iter_mut().for_each(|player| {
                                     let _ = player.send("Your opponent left the game.\n");
                                 });

@@ -1,8 +1,9 @@
 //! Game grid.
 
-use crate::ship::Ship;
+use crate::ship::{Ship, ShipType};
 use crate::Result;
 use std::convert::TryFrom;
+use std::fmt;
 use std::io::{Result as IoResult, Write};
 use std::result::Result as StdResult;
 use std::str;
@@ -11,12 +12,29 @@ use std::str;
 const ALPHABET_CHARS: &str = "abcdefghijklmnopqrstuvwxyz";
 
 /// Representation of coordinates on a 2-dimensional plane.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Default)]
 pub struct Coordinate {
     /// X value.
     pub x: u8,
     /// Y value.
     pub y: u8,
+    /// Whether if the coordinate is hit.
+    pub is_hit: bool,
+}
+
+impl PartialEq for Coordinate {
+    fn eq(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+}
+
+impl fmt::Debug for Coordinate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Coordinate")
+            .field("x", &self.x)
+            .field("y", &self.y)
+            .finish()
+    }
 }
 
 impl<'a> TryFrom<String> for Coordinate {
@@ -43,7 +61,11 @@ impl<'a> TryFrom<String> for Coordinate {
 
 impl From<(u8, u8)> for Coordinate {
     fn from(v: (u8, u8)) -> Self {
-        Self { x: v.0, y: v.1 }
+        Self {
+            x: v.0,
+            y: v.1,
+            ..Self::default()
+        }
     }
 }
 
@@ -73,17 +95,38 @@ impl Grid {
     /// Also see [`Ship::new_random`].
     pub fn new_random(width: u8, height: u8) -> Self {
         let mut grid = Grid::new(width, height);
-        for _ in 0..fastrand::i8(3..=5) {
+        let ship_count = fastrand::usize(4..=7);
+        let mut battleship = None;
+        while grid.ships.len() != ship_count {
             let ship = Ship::new_random(grid.width, grid.height);
-            grid.place_ship(ship);
+            if let ShipType::Battleship(_) = ship.type_ {
+                battleship = Some(ship);
+            } else {
+                grid.place_ship(ship);
+            }
+        }
+        if let Some(battleship) = battleship {
+            grid.place_ship(battleship);
         }
         grid
     }
 
     /// Places a ship on the grid.
-    pub fn place_ship(&mut self, ship: Ship) {
-        // TODO: add rules for placing ships
-        self.ships.push(ship);
+    pub fn place_ship(&mut self, ship: Ship) -> bool {
+        let overlaps = self
+            .ships
+            .iter()
+            .any(|s| s.coords.iter().any(|coord| ship.coords.contains(coord)));
+        let overflows = ship
+            .coords
+            .iter()
+            .any(|coord| coord.x > self.width || coord.y > self.height);
+        if overlaps || overflows {
+            false
+        } else {
+            self.ships.push(ship);
+            true
+        }
     }
 
     /// Returns the grid as string.
@@ -96,21 +139,32 @@ impl Grid {
     /// Display a point on the grid.
     ///
     /// The point might be empty or a part of a ship.
-    fn display_point<W: Write>(&self, out: &mut W, x: u8, y: u8, show_ships: bool) -> IoResult<()> {
+    fn display_point<W: Write>(
+        &self,
+        out: &mut W,
+        coordinate: Coordinate,
+        show_ships: bool,
+    ) -> IoResult<()> {
         if let Some(ship) = self
             .ships
             .iter()
-            .find(|ship| ship.coord.x == x && ship.coord.y == y)
+            .find(|ship| ship.coords.contains(&coordinate))
         {
             write!(
                 out,
                 "{} ",
-                if ship.hit != 0 {
-                    "☒"
+                if ship
+                    .coords
+                    .iter()
+                    .find(|c| *c == &coordinate)
+                    .map(|c| c.is_hit)
+                    == Some(true)
+                {
+                    String::from("☒")
                 } else if show_ships {
-                    "☐"
+                    ship.type_.to_string()
                 } else {
-                    "✕"
+                    String::from("✕")
                 }
             )?;
         } else {
@@ -126,7 +180,7 @@ impl Grid {
         for h in 0..self.height + 1 {
             if h == 0 {
                 write!(out, "   ")?;
-            } else if h == self.height {
+            } else if h.to_string().len() == 2 {
                 write!(out, "{} ", h)?;
             } else {
                 write!(out, "{}  ", h)?;
@@ -135,7 +189,7 @@ impl Grid {
                 if h == 0 {
                     write!(out, "{} ", alphabet_chars[w as usize].to_uppercase())?;
                 } else {
-                    self.display_point(out, w + 1, h, show_ships)?;
+                    self.display_point(out, Coordinate::from((w + 1, h)), show_ships)?;
                 }
             }
             writeln!(out)?;
