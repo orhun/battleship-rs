@@ -54,11 +54,11 @@ You can use the following environment variables for specifying the game settings
 
 After joining the game, players take turns firing shots (by calling out a grid coordinate) to attempt to hit the opponent's enemy ships. Example coordinates would be `a1`, `g8`, `E4`, `I2`, and so on.
 
-<img src="assets/hit.png" alt="hit" width="255" height="314">
+![hit](assets/hit.jpg)
 
 Each player has two grids: an upper and lower grid.
 
-![grids](assets/grids.png)
+![grids](assets/grid.jpg)
 
 The lower grid views the location of the player's own ships, while the upper grid shows the shots fired toward the opponent and also gives information about whether those shots were hits or misses.
 
