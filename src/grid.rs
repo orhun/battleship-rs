@@ -2,6 +2,7 @@
 
 use crate::ship::Ship;
 use crate::Result;
+use std::convert::TryFrom;
 use std::io::{Result as IoResult, Write};
 use std::result::Result as StdResult;
 use std::str;

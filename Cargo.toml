@@ -3,11 +3,15 @@ name = "battleship"
 version = "0.1.0"
 description = "Battleship game implemented in Rust"
 authors = ["Orhun Parmaksız <orhunparmaksiz@gmail.com>"]
-edition = "2021"
+edition = "2018" # support older Rust versions
+rust-version = "1.38.0"
 
 [dependencies]
 fastrand = "1.7.0"
 
+# Tweak release profile settings for faster code:
+# - enable link time optimization
+# - reduce the code generation units
 [profile.release]
 lto = true
 codegen-units = 1

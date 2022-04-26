@@ -5,6 +5,7 @@ use crate::grid::Grid;
 use crate::player::Player;
 use crate::ship::Ship;
 use crate::Result;
+use std::convert::TryFrom;
 use std::thread;
 use std::time::Duration;
 

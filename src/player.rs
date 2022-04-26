@@ -32,7 +32,7 @@ impl Player {
 
     /// Greets the player with a message and sets the name.
     pub fn greet(&mut self) -> Result<()> {
-        self.send(&format!("{BANNER}\nPlease enter your name: "))?;
+        self.send(&format!("{}\nPlease enter your name: ", BANNER))?;
         self.name = self.read()?;
         Ok(())
     }
@@ -62,7 +62,7 @@ impl Drop for Player {
         if let Ok(peer_addr) = self.stream.peer_addr() {
             println!("[+] Ending TCP connection with {:?}", peer_addr);
             if let Err(e) = self.exit() {
-                eprintln!("[!] Failed to end TCP connection: {e}")
+                eprintln!("[!] Failed to end TCP connection: {}", e)
             }
         }
     }
