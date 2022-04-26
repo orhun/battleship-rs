@@ -1,0 +1,128 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: "0 0 * * 0"
+
+jobs:
+  build:
+    name: Build on ${{ matrix.OS }} using Rust ${{ matrix.TOOLCHAIN }}
+    runs-on: ${{ matrix.OS }}
+    strategy:
+      fail-fast: false
+      matrix:
+        OS: [ubuntu-latest, macos-latest, windows-latest]
+        TOOLCHAIN: [stable, nightly]
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.TOOLCHAIN }}
+          override: true
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+
+      - name: Build
+        run: |
+          cargo build
+          cargo build --no-default-features
+
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+
+      - name: Setup cargo-tarpaulin
+        shell: bash
+        run: |
+          curl -s https://api.github.com/repos/xd009642/tarpaulin/releases/latest | \
+            grep "browser_download_url.*tar.gz" | cut -d : -f 2,3 | tr -d \" | wget -qi -
+          tar -xzf cargo-tarpaulin-*.tar.gz
+          mv cargo-tarpaulin ~/.cargo/bin/
+
+      - name: Run tests
+        run: cargo tarpaulin --out Xml --verbose
+
+      - name: Upload reports to codecov
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  lint:
+    name: Check lints
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          components: rustfmt, clippy
+
+      - name: Check formatting
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: Run clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+
+      - name: Run cargo-msrv
+        shell: bash
+        run: |
+          curl -s 'https://api.github.com/repos/foresterre/cargo-msrv/releases' | \
+            jq -r ".[0].assets[] | select(.name | contains (\"Linux_x86_64\")).browser_download_url" | \
+            wget -qi -
+          tar -xvf cargo-msrv*_Linux_x86_64.tar -C  ~/.cargo/bin/ cargo-msrv
+          printf "Checking MSRV..."
+          cargo msrv --output-format json verify | tail -n 1 | jq --exit-status '.success'
+
+      - name: Run cargo-audit
+        uses: actions-rs/audit-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run lychee
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: --exclude "docs.rs" -v *.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
