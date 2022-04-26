@@ -10,6 +10,12 @@ use std::str;
 
 /// Available characters for column names.
 pub const ALPHABET_CHARS: &str = "abcdefghijklmnopqrstuvwxyz";
+/// The character that represents a hit.
+const HIT_POINT: &str = "☒";
+/// The character that represents a miss.
+const MISSED_POINT: &str = "✕";
+/// The character to display a default coordinate.
+const DEFAULT_POINT: &str = "•";
 
 /// Representation of coordinates on a 2-dimensional plane.
 #[derive(Clone, Copy, Default)]
@@ -160,15 +166,15 @@ impl Grid {
                     .map(|c| c.is_hit)
                     == Some(true)
                 {
-                    String::from("☒")
+                    HIT_POINT.to_string()
                 } else if show_ships {
                     ship.type_.to_string()
                 } else {
-                    String::from("✕")
+                    MISSED_POINT.to_string()
                 }
             )?;
         } else {
-            write!(out, "• ")?;
+            write!(out, "{} ", DEFAULT_POINT)?;
         }
         Ok(())
     }

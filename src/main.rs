@@ -3,13 +3,10 @@ use std::process;
 
 /// Default TCP socket address to serve the game.
 const DEFAULT_SOCKET_ADDR: &str = "127.0.0.1:1234";
-
 /// Environment variable for setting the TCP socket address.
 const SOCKET_ADDR_ENV: &str = concat!(env!("CARGO_PKG_NAME"), "_socket");
-
 /// Environment variable for setting the grid width.
 const GRID_WIDTH_ENV: &str = concat!(env!("CARGO_PKG_NAME"), "_grid_width");
-
 /// Environment variable for setting the grid height.
 const GRID_HEIGHT_ENV: &str = concat!(env!("CARGO_PKG_NAME"), "_grid_height");
 
