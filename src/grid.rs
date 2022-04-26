@@ -8,8 +8,8 @@ use std::io::{Result as IoResult, Write};
 use std::result::Result as StdResult;
 use std::str;
 
-/// Available characters for column names.
-pub const ALPHABET_CHARS: &str = "abcdefghijklmnopqrstuvwxyz";
+/// Available alphabet characters for column names.
+pub const ALPHABET: &str = "abcdefghijklmnopqrstuvwxyz";
 /// The character that represents a hit.
 const HIT_POINT: &str = "☒";
 /// The character that represents a miss.
@@ -34,6 +34,14 @@ impl PartialEq for Coordinate {
     }
 }
 
+impl fmt::Display for Coordinate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let alphabet_chars = ALPHABET.chars().collect::<Vec<char>>();
+        let index = self.x.checked_sub(1).unwrap_or_default() as usize;
+        write!(f, "{}{}", alphabet_chars[index].to_uppercase(), self.y)
+    }
+}
+
 impl fmt::Debug for Coordinate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Coordinate")
@@ -48,7 +56,7 @@ impl<'a> TryFrom<String> for Coordinate {
     fn try_from(mut value: String) -> StdResult<Self, Self::Error> {
         value = value.to_lowercase();
         let mut coordinate = Coordinate::default();
-        for (i, c) in ALPHABET_CHARS.chars().enumerate() {
+        for (i, c) in ALPHABET.chars().enumerate() {
             if value.starts_with(&c.to_string()) {
                 value = value.trim_start_matches(c).to_string();
                 coordinate.x = i as u8 + 1;
@@ -181,7 +189,7 @@ impl Grid {
 
     /// Prints the grid to the given output.
     fn display<W: Write>(&self, out: &mut W, show_ships: bool) -> IoResult<()> {
-        let alphabet_chars = ALPHABET_CHARS.chars().collect::<Vec<char>>();
+        let alphabet_chars = ALPHABET.chars().collect::<Vec<char>>();
         writeln!(out)?;
         for h in 0..self.height + 1 {
             if h == 0 {
@@ -219,10 +227,9 @@ mod tests {
             ((26, 2), "z2"),
         ];
         for (coord, coord_str) in test_cases {
-            assert_eq!(
-                Ok(Coordinate::from(coord)),
-                Coordinate::try_from(coord_str.to_string()),
-            );
+            let coordinate = Coordinate::from(coord);
+            assert_eq!(Ok(coordinate), Coordinate::try_from(coord_str.to_string()));
+            assert_eq!(coord_str.to_uppercase(), coordinate.to_string())
         }
         assert!(Coordinate::try_from(String::from("test")).is_err());
         assert!(Coordinate::try_from(String::from("a999")).is_err());

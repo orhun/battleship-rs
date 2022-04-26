@@ -132,6 +132,8 @@ impl Game {
                 } else {
                     self.players[i].send("Missed.\n")?;
                 }
+                let message = format!("{} is firing at {}\n", self.players[i].name, coordinate);
+                self.players[MAX_PLAYERS - (i + 1)].send(&message)?;
             }
         }
         Ok(())

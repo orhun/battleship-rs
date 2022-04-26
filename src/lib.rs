@@ -8,7 +8,7 @@ pub mod player;
 pub mod ship;
 
 use crate::game::Game;
-use crate::grid::{Grid, ALPHABET_CHARS};
+use crate::grid::{Grid, ALPHABET};
 use crate::player::Player;
 use std::io::{Error as IoError, ErrorKind};
 use std::net::TcpListener;
@@ -28,9 +28,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /// Runs the game.
 pub fn run(socket_addr: &str, grid_width: u8, grid_height: u8) -> Result<()> {
-    if usize::from(grid_width) > ALPHABET_CHARS.len()
-        || usize::from(grid_height) > ALPHABET_CHARS.len()
-    {
+    if usize::from(grid_width) > ALPHABET.len() || usize::from(grid_height) > ALPHABET.len() {
         return Err("[!] Invalid grid dimensions.".into());
     }
     let game = Arc::new(Mutex::new(Game::default()));
