@@ -9,7 +9,7 @@ use std::result::Result as StdResult;
 use std::str;
 
 /// Available characters for column names.
-const ALPHABET_CHARS: &str = "abcdefghijklmnopqrstuvwxyz";
+pub const ALPHABET_CHARS: &str = "abcdefghijklmnopqrstuvwxyz";
 
 /// Representation of coordinates on a 2-dimensional plane.
 #[derive(Clone, Copy, Default)]
