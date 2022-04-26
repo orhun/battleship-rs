@@ -1,4 +1,4 @@
-//! Game grid.
+//! Game board.
 
 use crate::ship::{Ship, ShipType};
 use crate::Result;
@@ -20,28 +20,22 @@ const DEFAULT_POINT: &str = "•";
 /// Representation of coordinates on a 2-dimensional plane.
 #[derive(Clone, Copy, Default)]
 pub struct Coordinate {
-    /// X value.
+    /// Point on the X axis.
     pub x: u8,
-    /// Y value.
+    /// Point on the Y axis.
     pub y: u8,
     /// Whether if the coordinate is hit.
     pub is_hit: bool,
 }
 
+/// Dismiss `is_hit` field during comparisons.
 impl PartialEq for Coordinate {
     fn eq(&self, other: &Self) -> bool {
         self.x == other.x && self.y == other.y
     }
 }
 
-impl fmt::Display for Coordinate {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let alphabet_chars = ALPHABET.chars().collect::<Vec<char>>();
-        let index = self.x.checked_sub(1).unwrap_or_default() as usize;
-        write!(f, "{}{}", alphabet_chars[index].to_uppercase(), self.y)
-    }
-}
-
+/// Omit `is_hit` field from debug output.
 impl fmt::Debug for Coordinate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Coordinate")
@@ -51,6 +45,16 @@ impl fmt::Debug for Coordinate {
     }
 }
 
+/// For converting between e.g. (10, 10) to "J10"
+impl fmt::Display for Coordinate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let alphabet_chars = ALPHABET.chars().collect::<Vec<char>>();
+        let index = self.x.checked_sub(1).unwrap_or_default() as usize;
+        write!(f, "{}{}", alphabet_chars[index].to_uppercase(), self.y)
+    }
+}
+
+/// For converting between e.g. "J10" to (10, 10)
 impl<'a> TryFrom<String> for Coordinate {
     type Error = ();
     fn try_from(mut value: String) -> StdResult<Self, Self::Error> {
@@ -73,6 +77,7 @@ impl<'a> TryFrom<String> for Coordinate {
     }
 }
 
+/// Support constructing a [`Coordinate`] from a tuple.
 impl From<(u8, u8)> for Coordinate {
     fn from(v: (u8, u8)) -> Self {
         Self {
@@ -86,9 +91,9 @@ impl From<(u8, u8)> for Coordinate {
 /// Representation of the game grid.
 #[derive(Default, Debug)]
 pub struct Grid {
-    /// Width value.
+    /// Width.
     pub width: u8,
-    /// Height value.
+    /// Height.
     pub height: u8,
     /// Ships on the grid.
     pub ships: Vec<Ship>,
@@ -104,9 +109,12 @@ impl Grid {
         }
     }
 
-    /// Constructs a new instance of [`Grid`] with random placement of ships.
+    /// Constructs a new instance of [`Grid`] with random ships and placements.
     ///
+    /// Allows only one [`Battleship`] on the grid.
     /// Also see [`Ship::new_random`].
+    ///
+    /// [`Battleship`]: ShipType::Battleship
     pub fn new_random(width: u8, height: u8) -> Self {
         let mut grid = Grid::new(width, height);
         let ship_count = fastrand::usize(4..=7);
@@ -126,6 +134,10 @@ impl Grid {
     }
 
     /// Places a ship on the grid.
+    ///
+    /// Returns `false` if the ship is overlapping with other ships
+    /// or placed outside the grid.
+    /// Returns `true` if the placement is successful.
     pub fn place_ship(&mut self, ship: Ship) -> bool {
         let overlaps = self
             .ships
@@ -144,6 +156,8 @@ impl Grid {
     }
 
     /// Returns the grid as string.
+    ///
+    /// Only hits/misses are shown if `show_ships` is true.
     pub fn as_string(&self, show_ships: bool) -> Result<String> {
         let mut s = Vec::new();
         self.display(&mut s, show_ships)?;
@@ -215,6 +229,7 @@ impl Grid {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ship::Orientation;
 
     #[test]
     fn test_coordinate() {
@@ -234,5 +249,58 @@ mod tests {
         assert!(Coordinate::try_from(String::from("test")).is_err());
         assert!(Coordinate::try_from(String::from("a999")).is_err());
         assert!(Coordinate::try_from(String::from("42")).is_err());
+        assert_eq!(
+            format!("{:?}", Coordinate::from((10, 2))),
+            "Coordinate { x: 10, y: 2 }"
+        );
+    }
+
+    #[test]
+    fn test_grid() -> Result<()> {
+        let mut grid = Grid::new(5, 5);
+        assert!(grid.place_ship(Ship::new(ShipType::Boat, vec![Coordinate::from((2, 3))])));
+        assert!(grid.place_ship(Ship::new(ShipType::Boat, vec![Coordinate::from((4, 5))])));
+        assert!(grid.place_ship(Ship::new(
+            ShipType::Destroyer(Orientation::Horizontal),
+            vec![Coordinate::try_from(String::from("D1")).unwrap()]
+        )));
+        assert!(!grid.place_ship(Ship::new(
+            ShipType::Battleship(Orientation::Vertical),
+            ShipType::Battleship(Orientation::Vertical).get_hitbox(Coordinate::from((2, 4)))
+        )));
+        assert!(grid.place_ship(Ship::new(
+            ShipType::Boat,
+            vec![{
+                let mut coordinate = Coordinate::try_from(String::from("B5")).unwrap();
+                coordinate.is_hit = true;
+                coordinate
+            }]
+        )));
+        assert_eq!(
+            r#"
+   A B C D E 
+1  • • • ▭ • 
+2  • • • • • 
+3  • △ • • • 
+4  • • • • • 
+5  • ☒ • △ • 
+"#,
+            grid.as_string(true)?
+        );
+        assert_eq!(
+            r#"
+   A B C D E 
+1  • • • ✕ • 
+2  • • • • • 
+3  • ✕ • • • 
+4  • • • • • 
+5  • ☒ • ✕ • 
+"#,
+            grid.as_string(false)?
+        );
+
+        let grid = Grid::new_random(15, 15);
+        assert!(!grid.ships.is_empty());
+        Ok(())
     }
 }

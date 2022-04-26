@@ -15,7 +15,7 @@ pub struct Player {
     pub grid: Grid,
     /// Player's hits.
     pub hits: Vec<Coordinate>,
-    /// TCP stream of the player.
+    /// TCP connection.
     stream: TcpStream,
 }
 
@@ -45,7 +45,7 @@ impl Player {
         Ok(self.stream.write_all(message.as_bytes())?)
     }
 
-    /// Reads the next line from the TCP steram.
+    /// Reads the next line from the TCP stream.
     pub fn read(&mut self) -> Result<String> {
         let mut reader = BufReader::new(&self.stream);
         let mut line = String::new();
@@ -60,6 +60,7 @@ impl Player {
     }
 }
 
+/// Shut down the TCP connection when the object goes out of scope.
 impl Drop for Player {
     fn drop(&mut self) {
         if let Ok(peer_addr) = self.stream.peer_addr() {
@@ -68,5 +69,25 @@ impl Drop for Player {
                 eprintln!("[!] Failed to end TCP connection: {}", e)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::TcpListener;
+    use std::thread;
+
+    #[test]
+    #[ignore]
+    fn test_player() -> Result<()> {
+        let address = "0.0.0.0:3333";
+        let listener = TcpListener::bind(&address)?;
+        thread::spawn(move || listener.accept());
+        let stream = TcpStream::connect(&address)?;
+        let mut player = Player::new(stream);
+        player.greet()?;
+        assert_eq!("unknown player", player.name);
+        Ok(())
     }
 }

@@ -10,9 +10,11 @@ use std::thread;
 use std::time::Duration;
 
 /// Maximum number of players.
-const MAX_PLAYERS: usize = 2;
+pub const MAX_PLAYERS: usize = 2;
 
 /// Representation of the Battleship game.
+///
+/// Handles the turns and game logic.
 #[derive(Default, Debug)]
 pub struct Game {
     /// Players of the game.
@@ -20,12 +22,14 @@ pub struct Game {
 }
 
 impl Game {
-    /// Checks if the players are connected.
+    /// Checks if the players are ready to play.
     pub fn is_ready(&self) -> bool {
         self.players.len() == MAX_PLAYERS
     }
 
     /// Adds a new player to the game.
+    ///
+    /// Also see [`Game::is_ready`]
     pub fn add_player(&mut self, player: Player) -> Result<()> {
         if self.players.get(0).is_none() {
             self.players.push(player);
@@ -43,7 +47,7 @@ impl Game {
         Ok(())
     }
 
-    /// Shows the countdown for starting the game.
+    /// Shows countdown to players for starting the game.
     fn show_countdown(&mut self) -> Result<()> {
         println!("[#] Game is starting.");
         for i in 1..4 {
@@ -55,8 +59,12 @@ impl Game {
     }
 
     /// Shows the grid of the players.
+    ///
+    /// Hits/misses are shown on the upper grid.
+    /// Lower grid is used for showing the player ships.
     fn show_grid(&mut self, width: u8, height: u8) -> Result<()> {
         for i in 0..MAX_PLAYERS {
+            // Show upper grid (hits/misses).
             let ships = self.players[i]
                 .hits
                 .iter()
@@ -80,6 +88,8 @@ impl Game {
             }
             .as_string(false)?;
             self.players[i].send(&grid_str)?;
+
+            // Show lower grid (ships).
             let grid_str = self.players[i].grid.as_string(true)?;
             self.players[i].send(&grid_str)?;
         }
@@ -87,11 +97,15 @@ impl Game {
     }
 
     /// Starts the game.
-    /// TODO: add a more descriptive comment.
-    pub fn play(&mut self, grid_width: u8, grid_height: u8) -> Result<()> {
+    ///
+    /// Number of players is determined by [`MAX_PLAYERS`] constant.
+    /// Game loop continues until one of the players hits all of the ships of the opponent.
+    /// Lower and upper grids are shown along with extra messages during the gameplay.
+    pub fn start(&mut self, grid_width: u8, grid_height: u8) -> Result<()> {
         self.show_countdown()?;
         'game: loop {
             for i in 0..MAX_PLAYERS {
+                // Check if the player has won.
                 if self.players[i].grid.ships.iter().all(|ship| ship.is_sunk()) {
                     let message = format!("{} won.\n", self.players[MAX_PLAYERS - (i + 1)].name);
                     self.players[i].send(&message)?;
@@ -101,12 +115,16 @@ impl Game {
                     break 'game;
                 }
 
+                // Show the grid.
                 self.show_grid(grid_width, grid_height)?;
 
+                // Handle the player turn.
                 self.players[i].send("Your turn: ")?;
                 let message = format!("{}'s turn.\n", self.players[i].name);
                 print!("[#] {}", message);
                 self.players[MAX_PLAYERS - (i + 1)].send(&message)?;
+
+                // Parse the grid coordinate.
                 let coordinate_str = self.players[i].read()?;
                 let coordinate =
                     if let Ok(coordinate) = Coordinate::try_from(coordinate_str.to_string()) {
@@ -119,6 +137,8 @@ impl Game {
                         self.players[i].send("Your missile went to space!\n")?;
                         continue;
                     };
+
+                // Handle hit/miss.
                 self.players[i].hits.push(coordinate);
                 if let Some(coordinate) = self.players[MAX_PLAYERS - (i + 1)]
                     .grid

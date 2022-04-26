@@ -11,11 +11,11 @@ const GRID_WIDTH_ENV: &str = concat!(env!("CARGO_PKG_NAME"), "_grid_width");
 const GRID_HEIGHT_ENV: &str = concat!(env!("CARGO_PKG_NAME"), "_grid_height");
 
 fn main() {
-    // Get the TCP address.
+    // Get the TCP address from environment.
     let socket_addr = env::var(SOCKET_ADDR_ENV.to_uppercase())
         .unwrap_or_else(|_| DEFAULT_SOCKET_ADDR.to_string());
 
-    // Get the game configuration.
+    // Get the game configuration from environment.
     let (grid_width, grid_height) = (
         env::var(GRID_WIDTH_ENV.to_uppercase())
             .ok()

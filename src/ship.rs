@@ -1,4 +1,4 @@
-//! A ship.
+//! Ship.
 
 use crate::grid::Coordinate;
 use std::fmt;
@@ -13,7 +13,7 @@ const DESTROYER_HORIZONTAL: &str = "▭";
 const BATTLESHIP: &str = "▧";
 
 /// Available orientations for the ship.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Orientation {
     /// Vertical placement.
     Vertical,
@@ -22,7 +22,7 @@ pub enum Orientation {
 }
 
 /// Available ship types.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ShipType {
     /// 1x1 boat.
     Boat,
@@ -32,12 +32,14 @@ pub enum ShipType {
     Battleship(Orientation),
 }
 
+/// Default ship is Boat because it is smol ^_^
 impl Default for ShipType {
     fn default() -> Self {
         Self::Boat
     }
 }
 
+/// Display the ship as a string.
 impl fmt::Display for ShipType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
@@ -80,7 +82,9 @@ impl ShipType {
     }
 
     /// Returns the hit box of the ship.
-    pub fn create_hitbox(&self, coordinate: Coordinate) -> Vec<Coordinate> {
+    ///
+    /// Hit are is based on the ship size.
+    pub fn get_hitbox(&self, coordinate: Coordinate) -> Vec<Coordinate> {
         match self {
             Self::Boat => {
                 vec![coordinate]
@@ -151,11 +155,78 @@ impl Ship {
     pub fn new_random(max_x: u8, max_y: u8) -> Self {
         let ship_type = ShipType::new_random();
         let coordinate = Coordinate::from((fastrand::u8(1..=max_x), fastrand::u8(1..=max_y)));
-        Self::new(ship_type, ship_type.create_hitbox(coordinate))
+        Self::new(ship_type, ship_type.get_hitbox(coordinate))
     }
 
     /// Returns whether if the ship is sunk.
     pub fn is_sunk(&self) -> bool {
         self.coords.iter().all(|c| c.is_hit)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ship_type() {
+        assert_eq!(ShipType::Boat, ShipType::default());
+        assert_eq!(BOAT, ShipType::Boat.to_string());
+        assert_eq!(
+            DESTROYER_VERTICAL,
+            ShipType::Destroyer(Orientation::Vertical).to_string()
+        );
+        assert_eq!(
+            DESTROYER_HORIZONTAL,
+            ShipType::Destroyer(Orientation::Horizontal).to_string()
+        );
+        assert_eq!(
+            BATTLESHIP,
+            ShipType::Battleship(Orientation::Vertical).to_string()
+        );
+        assert_eq!(
+            vec![Coordinate::from((1, 1))],
+            ShipType::Boat.get_hitbox(Coordinate::from((1, 1)))
+        );
+        assert_eq!(
+            vec![Coordinate::from((1, 1)), Coordinate::from((1, 2))],
+            ShipType::Destroyer(Orientation::Vertical).get_hitbox(Coordinate::from((1, 1)))
+        );
+        assert_eq!(
+            vec![Coordinate::from((1, 1)), Coordinate::from((2, 1))],
+            ShipType::Destroyer(Orientation::Horizontal).get_hitbox(Coordinate::from((1, 1)))
+        );
+        assert_eq!(
+            vec![
+                Coordinate::from((1, 1)),
+                Coordinate::from((1, 2)),
+                Coordinate::from((1, 3)),
+                Coordinate::from((2, 1)),
+                Coordinate::from((2, 2)),
+                Coordinate::from((2, 3))
+            ],
+            ShipType::Battleship(Orientation::Vertical).get_hitbox(Coordinate::from((1, 1)))
+        );
+        assert_eq!(
+            vec![
+                Coordinate::from((1, 1)),
+                Coordinate::from((2, 1)),
+                Coordinate::from((3, 1)),
+                Coordinate::from((1, 2)),
+                Coordinate::from((2, 2)),
+                Coordinate::from((3, 2))
+            ],
+            ShipType::Battleship(Orientation::Horizontal).get_hitbox(Coordinate::from((1, 1)))
+        );
+    }
+
+    #[test]
+    fn test_ship() {
+        for _ in 0..5 {
+            let mut ship = Ship::new_random(10, 10);
+            assert!(!ship.is_sunk());
+            ship.coords.iter_mut().for_each(|coord| coord.is_hit = true);
+            assert!(ship.is_sunk());
+        }
     }
 }
