@@ -152,6 +152,19 @@ impl Game {
                 } else {
                     self.players[i].send("Missed.\n")?;
                 }
+
+                // Inform about the game stats.
+                let message = format!(
+                    "{} has {} ships remaining.\n",
+                    self.players[MAX_PLAYERS - (i + 1)].name,
+                    self.players[MAX_PLAYERS - (i + 1)]
+                        .grid
+                        .ships
+                        .iter()
+                        .filter(|ship| !ship.is_sunk())
+                        .count()
+                );
+                self.players[i].send(&message)?;
                 let message = format!("{} is firing at {}\n", self.players[i].name, coordinate);
                 self.players[MAX_PLAYERS - (i + 1)].send(&message)?;
             }
