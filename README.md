@@ -6,6 +6,12 @@
 
 Fully playable between 2 players on the terminal.
 
+To play on the public instance:
+
+```shell-session
+$ nc battleship.orhun.dev 1234
+```
+
 ### Building
 
 Minimum supported Rust version: `1.38.0`
