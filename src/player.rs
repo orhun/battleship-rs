@@ -34,6 +34,9 @@ impl Player {
     pub fn greet(&mut self) -> Result<()> {
         self.send(&format!("{}\nPlease enter your name: ", BANNER))?;
         self.name = self.read()?;
+        if self.name.is_empty() {
+            self.name = String::from("unknown player");
+        }
         Ok(())
     }
 
