@@ -1,6 +1,6 @@
 [package]
 name = "battleship"
-version = "0.1.0"
+version = "0.1.1"
 description = "Battleship game implemented in Rust"
 authors = ["Orhun Parmaksız <orhunparmaksiz@gmail.com>"]
 license = "MIT"
