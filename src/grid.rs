@@ -55,7 +55,7 @@ impl fmt::Display for Coordinate {
 }
 
 /// For converting between e.g. "J10" to (10, 10)
-impl<'a> TryFrom<String> for Coordinate {
+impl TryFrom<String> for Coordinate {
     type Error = ();
     fn try_from(mut value: String) -> StdResult<Self, Self::Error> {
         value = value.to_lowercase();
