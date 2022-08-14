@@ -60,14 +60,17 @@ pub fn run(socket_addr: &str, grid_width: u8, grid_height: u8) -> Result<()> {
                         // Start the game when ready.
                         if game.is_ready() {
                             // Assign random boards to the players.
-                            for player in game.players.iter_mut() {
-                                player.grid = Grid::new_random(grid_width, grid_height);
-                                println!(
-                                    "[#] {}'s grid:{}",
-                                    player.name,
-                                    player.grid.as_string(true)?
-                                );
-                            }
+                            game.players
+                                .iter_mut()
+                                .try_for_each::<_, Result<()>>(|player| {
+                                    player.grid = Grid::new_random(grid_width, grid_height);
+                                    println!(
+                                        "[#] {}'s grid:{}",
+                                        player.name,
+                                        player.grid.as_string(true)?
+                                    );
+                                    Ok(())
+                                })?;
                             // Start the game loop.
                             game.start(grid_width, grid_height)?;
                         }

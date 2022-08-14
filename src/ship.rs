@@ -13,7 +13,7 @@ const DESTROYER_HORIZONTAL: &str = "▭";
 const BATTLESHIP: &str = "▧";
 
 /// Available orientations for the ship.
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Orientation {
     /// Vertical placement.
     Vertical,
@@ -22,7 +22,7 @@ pub enum Orientation {
 }
 
 /// Available ship types.
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum ShipType {
     /// 1x1 boat.
     Boat,
