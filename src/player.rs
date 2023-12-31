@@ -82,9 +82,9 @@ mod tests {
     #[ignore]
     fn test_player() -> Result<()> {
         let address = "0.0.0.0:3333";
-        let listener = TcpListener::bind(&address)?;
+        let listener = TcpListener::bind(address)?;
         thread::spawn(move || listener.accept());
-        let stream = TcpStream::connect(&address)?;
+        let stream = TcpStream::connect(address)?;
         let mut player = Player::new(stream);
         player.greet()?;
         assert_eq!("unknown player", player.name);

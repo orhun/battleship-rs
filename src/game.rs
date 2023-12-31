@@ -31,7 +31,7 @@ impl Game {
     ///
     /// Also see [`Game::is_ready`]
     pub fn add_player(&mut self, player: Player) -> Result<()> {
-        if self.players.get(0).is_none() {
+        if self.players.first().is_none() {
             self.players.push(player);
             self.players[0].send("Waiting for opponent...\n")?;
         } else {
